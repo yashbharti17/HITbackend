@@ -1,0 +1,7 @@
+# Ignore .env files
+*.env
+
+# Ignore the secrets directory
+credential.json
+
+node_modules/

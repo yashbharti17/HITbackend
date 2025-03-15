@@ -176,7 +176,7 @@ app.post('/api/candidates', upload.single('resume'), async (req, res) => {
     try {
         const {
             jobId, firstName, lastName, email, phone, education, experience,
-            linkedin, address, totalScore, skills, certifications = [], tools = []
+            linkedin, address, totalScore, skills=[], certifications = [], tools = []
         } = req.body;
 
         let resumeLink = null;
@@ -215,7 +215,7 @@ app.post('/api/candidates', upload.single('resume'), async (req, res) => {
             linkedin,
             address,
             totalScore,
-            skills: skills.split(','), // Convert CSV string to an array
+            skills: Array.isArray(skills) ? skills : [skills],
             certifications: Array.isArray(certifications) ? certifications : [certifications],
             tools: Array.isArray(tools) ? tools : [tools],
             resumeLink

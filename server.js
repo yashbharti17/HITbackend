@@ -20,11 +20,17 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Google Drive Auth
-const keyFile = process.env.GOOGLE_CREDENTIALS;
-const scopes = ['https://www.googleapis.com/auth/drive.file'];
-
-const auth = new google.auth.GoogleAuth({ keyFile, scopes });
+const scopes = [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/spreadsheets'  // Add this for Google Sheets access
+  ];
+  
+  const auth = new google.auth.GoogleAuth({
+    keyFile: process.env.GOOGLE_CREDENTIALS, // Ensure your .env file has this path
+    scopes: scopes
+  }); 
 const drive = google.drive({ version: 'v3', auth });
+const sheets = google.sheets({ version: 'v4', auth });
 
 // Job Schema
 const jobSchema = new mongoose.Schema({
@@ -237,5 +243,92 @@ app.get("/api/candidates", async (req, res) => {
     } catch (error) {
         console.error("Error fetching candidates:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
+
+
+app.post('/api/candidateToSheet', async (req, res) => {
+    const candidateDetails = req.body;
+    const { candidateId, firstName, lastName, email, phone, education, experience, linkedin, address, totalScore, skills, certifications, tools } = candidateDetails;
+
+    const values = [
+        [
+            candidateId || "Not Specified",
+            firstName || "Not Specified",
+            lastName || "Not Specified",
+            email || "Not Specified",
+            phone || "Not Specified",
+            education || "Not Specified",
+            experience || "Not Specified",
+            linkedin || "Not Specified",
+            address || "Not Specified",
+            totalScore || "0",
+            (Array.isArray(skills) ? skills.join(", ") : skills || "Not Specified"),
+            (Array.isArray(certifications) ? certifications.join(", ") : certifications || "Not Specified"),
+            (Array.isArray(tools) ? tools.join(", ") : tools || "Not Specified")
+        ]
+    ];
+
+    try {
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: '1Ufx8chsZzW2SKYPc_AHueDwJI9B7G6xbzYhk8lJgF5Y',
+            range: 'Sheet1!A1', // Adjust the sheet name and starting cell as needed
+            valueInputOption: 'USER_ENTERED',
+            resource: { values }
+        });
+        console.log('Data added to Google Sheet successfully');
+        res.status(200).json({ message: 'Data added to Google Sheet successfully' });
+    } catch (err) {
+        console.error('Failed to append data to Google Sheet:', err);
+        res.status(500).json({ message: 'Failed to submit the data in the google sheet' });
+    }
+});
+
+app.post('/api/assessmentosheet', async (req, res) => {
+    console.log(req.body);
+    const candidateDetails = req.body;
+    const {
+        candidateId,
+        agreeableness,
+        communicationSkills,
+        conscientiousness,
+        criticalThinking,
+        emotionalStability,
+        extroversion,
+        leadershipAbility,
+        openness,
+        professionalCultureProfile
+    } = candidateDetails;
+
+
+    const values = [
+        [
+            candidateId || "Not Specified",
+            agreeableness || "Not Specified",
+            communicationSkills || "Not Specified",
+            conscientiousness || "Not Specified",
+            criticalThinking || "Not Specified",
+            emotionalStability || "Not Specified",
+            extroversion || "Not Specified",
+            leadershipAbility || "Not Specified",
+            openness || "Not Specified",
+            professionalCultureProfile || "Not Specified"
+        ]
+    ];
+
+    try {
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: '1Ufx8chsZzW2SKYPc_AHueDwJI9B7G6xbzYhk8lJgF5Y',
+            range: 'Sheet2', // Adjust the sheet name and starting cell as needed
+            valueInputOption: 'USER_ENTERED',
+            resource: { values }
+        });
+        console.log('Data added to Google Sheet successfully');
+        res.status(200).json({ message: 'Data added to Google Sheet successfully' });
+    } catch (err) {
+        console.error('Failed to append data to Google Sheet:', err);
+        res.status(500).json({ message: 'Failed to submit the data in the google sheet' });
     }
 });

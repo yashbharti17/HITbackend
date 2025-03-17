@@ -159,6 +159,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 const candidateSchema = new mongoose.Schema({
     jobId: String,
+    candidateId:String,
     firstName: String,
     lastName: String,
     email: String,
@@ -181,7 +182,7 @@ const Candidate = mongoose.model('Candidate', candidateSchema);
 app.post('/api/candidates', upload.single('resume'), async (req, res) => {
     try {
         const {
-            jobId, firstName, lastName, email, phone, education, experience,
+            jobId,candidateId, firstName, lastName, email, phone, education, experience,
             linkedin, address, totalScore, skills=[], certifications = [], tools = []
         } = req.body;
 
@@ -212,6 +213,7 @@ app.post('/api/candidates', upload.single('resume'), async (req, res) => {
         // **Save Candidate to MongoDB**
         const candidate = new Candidate({
             jobId,
+            candidateId,
             firstName,
             lastName,
             email,
@@ -330,5 +332,64 @@ app.post('/api/assessmentosheet', async (req, res) => {
     } catch (err) {
         console.error('Failed to append data to Google Sheet:', err);
         res.status(500).json({ message: 'Failed to submit the data in the google sheet' });
+    }
+});
+
+
+
+// Define evaluationSchema
+const evaluationSchema = new mongoose.Schema({
+    candidateId: { type: String, required: true },
+    evaluationResults: { type: Array, required: true },
+    ScoresFactor: { type: Array, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+const Evaluation = mongoose.model("Evaluation", evaluationSchema);
+
+
+// API Route to Save Evaluation
+app.post("/api/saveEvaluation", async (req, res) => {
+    try {
+        const { candidateId, evaluationResults, ScoresFactor } = req.body;
+
+        if (!candidateId || !evaluationResults) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const newEvaluation = new Evaluation({ candidateId, evaluationResults, ScoresFactor });
+        await newEvaluation.save();
+
+        res.status(201).json({ message: "Evaluation saved successfully!" });
+    } catch (error) {
+        console.error("Error saving evaluation:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
+// Fetch Evaluation by Candidate ID
+app.get("/api/getEvaluation/:candidateId", async (req, res) => {
+    const evaluation = await Evaluation.findOne({ candidateId: req.params.candidateId });
+    if (!evaluation) return res.status(404).json({ error: "Evaluation not found" });
+    res.json(evaluation);
+});
+
+app.get("/api/getCandidate/:candidateId", async (req, res) => {
+    try {
+        const { candidateId } = req.params;
+
+        // Find candidate and populate job details
+        const candidate = await Candidate.findOne({ candidateId })
+            .populate("jobId", "jobClassification positionTitle");
+
+        if (!candidate) {
+            return res.status(404).json({ success: false, message: "Candidate not found." });
+        }
+
+        res.status(200).json({ success: true, data: candidate });
+    } catch (error) {
+        console.error("Error fetching candidate details:", error);
+        res.status(500).json({ success: false, error: "Internal Server Error" });
     }
 });

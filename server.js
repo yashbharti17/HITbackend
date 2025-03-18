@@ -393,3 +393,39 @@ app.get("/api/getCandidate/:candidateId", async (req, res) => {
         res.status(500).json({ success: false, error: "Internal Server Error" });
     }
 });
+
+// API endpoint to handle survey submission
+app.post('/api/submitForm', async (req, res) => {
+    const candidateDetails = req.body;
+    const { q1, q1Details, q2, q3, q3Details, q4, q4Details, q5, q6, q6Details, q7 } = candidateDetails;
+  
+    const values = [
+      [
+        q1 || "Not Specified",
+        q1Details || "Not Specified",
+        q2 || "Not Specified",
+        q3 || "Not Specified",
+        q3Details || "Not Specified",
+        q4 || "Not Specified",
+        q4Details || "Not Specified",
+        q5 || "Not Specified",
+        q6 || "Not Specified",
+        q6Details || "Not Specified",
+        q7 || "Not Specified"
+      ]
+    ];
+  
+    try {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: "1Ufx8chsZzW2SKYPc_AHueDwJI9B7G6xbzYhk8lJgF5Y",
+        range: 'Sheet3', // Adjust as per your sheet
+        valueInputOption: 'USER_ENTERED',
+        resource: { values }
+      });
+      console.log('Data added to Google Sheet successfully');
+      res.status(200).json({ message: 'Data added to Google Sheet successfully' });
+    } catch (err) {
+      console.error('Failed to append data to Google Sheet:', err);
+      res.status(500).json({ message: 'Failed to submit the data in the google sheet' });
+    }
+  });

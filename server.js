@@ -253,11 +253,13 @@ app.get("/api/candidates", async (req, res) => {
 
 app.post('/api/candidateToSheet', async (req, res) => {
     const candidateDetails = req.body;
-    const { candidateId, firstName, lastName, email, phone, education, experience, linkedin, address, totalScore, skills, certifications, tools } = candidateDetails;
+    const { candidateId, jobTitle, jobRole, firstName, lastName, email, phone, education, experience, linkedin, address, totalScore, skills, certifications, tools } = candidateDetails;
 
     const values = [
         [
             candidateId || "Not Specified",
+            jobTitle || "Not Specified",
+            jobRole || "Not Specified",
             firstName || "Not Specified",
             lastName || "Not Specified",
             email || "Not Specified",
@@ -293,6 +295,7 @@ app.post('/api/assessmentosheet', async (req, res) => {
     const candidateDetails = req.body;
     const {
         candidateId,
+        jobRole,
         agreeableness,
         communicationSkills,
         conscientiousness,
@@ -308,6 +311,7 @@ app.post('/api/assessmentosheet', async (req, res) => {
     const values = [
         [
             candidateId || "Not Specified",
+            jobRole || "Not Specified",
             agreeableness || "Not Specified",
             communicationSkills || "Not Specified",
             conscientiousness || "Not Specified",
